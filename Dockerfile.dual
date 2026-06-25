@@ -1,0 +1,35 @@
+FROM vastai/base-image:cuda12.4-py311-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    supervisor \
+    curl \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir vllm==0.9.1
+
+# Create symlink so start_vllm_dual.sh works with its /venv/main/bin/vllm path
+RUN mkdir -p /venv/main/bin && ln -sf $(which vllm) /venv/main/bin/vllm
+
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
+RUN curl -fsSL -o /usr/local/bin/cloudflared \
+    https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+    && chmod +x /usr/local/bin/cloudflared
+
+RUN mkdir -p /workspace/hf-cache
+
+ENV HF_HOME=/workspace/hf-cache
+ENV HF_TOKEN=""
+
+COPY supervisor/baraka-ai-dual.conf /etc/supervisor/conf.d/baraka-ai.conf
+COPY start_vllm_dual.sh /workspace/start_vllm_dual.sh
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /workspace/start_vllm_dual.sh /entrypoint.sh
+
+EXPOSE 8000 11434
+
+CMD ["/entrypoint.sh"]
