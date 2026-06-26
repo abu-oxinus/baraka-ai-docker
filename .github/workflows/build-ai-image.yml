@@ -23,8 +23,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: local-dev/tasks/ai_assistance/docker/
-          file: local-dev/tasks/ai_assistance/docker/Dockerfile.dual
+          context: .
+          file: Dockerfile.dual
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/baraka-ai:dual-gpu
           platforms: linux/amd64
